@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  php:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    container_name: amp_apache
+    volumes:
+      - ./php/php.ini:/usr/local/etc/php/php.ini
+      - ./htdocs:/var/www/html
+      - ./apache2/apache2.conf:/etc/apache2/apache2.conf
+      - ./apache2/sites-available/000-default.conf:/etc/apache2/sites-available/000-default.conf
+
+    ports:
+      - 80:80
+    depends_on:
+      - db
+    extra_hosts:
+      - "host.docker.internal:192.168.1.66"
+  db:
+    image: mariadb:10.4.17
+    container_name: amp-mysql
+    volumes:
+      - ./db/data:/var/lib/mysql
+      - ./db/my.cnf:/etc/mysql/conf.d/my.cnf
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=test
+      - MYSQL_USER=test
+      - MYSQL_PASSWORD=test
+      - TZ=Asia/Tokyo
+    ports:
+      - 3306:3306
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: amp_myadmin
+    environment:
+      - PMA_ARBITRARY=1
+      - PMA_HOST=amp-mysql
+      - PMA_USER=root
+      - PMA_PASSWORD=root
+    links:
+      - db
+    ports:
+      - 8080:80
+    volumes:
+      - ./phpmyadmin/sessions:/sessions
